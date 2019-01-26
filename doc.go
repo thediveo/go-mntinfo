@@ -1,6 +1,6 @@
 /*
 
-Package findmnt provides information about the currently mounted filesystems
+Package mntinfo provides information about the currently mounted filesystems
 on Linux (from the current mount namespace). This information is gathered from
 the proc filesystem, in particular, from /proc/self/mountinfo, or
 alternatively, from a specific PID (via /proc/[PID]/mountinfo). Just to

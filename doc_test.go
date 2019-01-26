@@ -29,15 +29,15 @@ func ExampleMounts_uniqueFstypes() {
 	mounts := mntinfo.Mounts(-1)
 
 	fstypes := map[string]bool{} // ...poor gopher's set emulation
-	fstype_names := []string{}   // gather all unique fstypes
+	fstypeNames := []string{}    // gather all unique fstypes
 	for _, mount := range mounts {
 		if _, ok := fstypes[mount.FsType]; !ok {
 			fstypes[mount.FsType] = true
-			fstype_names = append(fstype_names, mount.FsType)
+			fstypeNames = append(fstypeNames, mount.FsType)
 		}
 	}
-	sort.Strings(fstype_names)
-	fmt.Printf("currently mounted filesystem types: %s", strings.Join(fstype_names, ", "))
+	sort.Strings(fstypeNames)
+	fmt.Printf("currently mounted filesystem types: %s", strings.Join(fstypeNames, ", "))
 	// currently mounted filesystem types: autofs, binfmt_misc, cgroup, cgroup2, configfs, debugfs, ... vfat
 }
 
