@@ -88,7 +88,7 @@ var _ = Describe("mntinfo", func() {
 		It("reads self mountinfo", func() {
 			// There needs to be at least one mount for "/" on "/" ... or
 			// otherwise something is really rotten here.
-			minfo := Mounts(-1)
+			minfo := MountsOfPid(-1)
 			Expect(len(minfo)).NotTo(BeZero())
 			Expect(minfo).To(ContainElement(
 				MatchFields(IgnoreExtras, Fields{
@@ -98,17 +98,17 @@ var _ = Describe("mntinfo", func() {
 		})
 
 		It("filters mountinfo by fs type", func() {
-			minfo := FsTypeMounts(-1, "proc")
+			minfo := MountsOfType(-1, "proc")
 			Expect(len(minfo)).NotTo(BeZero())
 		})
 
 		It("reads mountinfo from PID", func() {
 			mypid := os.Getpid()
-			Expect(Mounts(mypid)).To(Equal(Mounts(-1)))
+			Expect(MountsOfPid(mypid)).To(Equal(MountsOfPid(-1)))
 		})
 
 		It("doesn't read from non-existing PID", func() {
-			Expect(len(Mounts(int(^uint(0) >> 1)))).To(BeZero())
+			Expect(len(MountsOfPid(int(^uint(0) >> 1)))).To(BeZero())
 		})
 
 	})

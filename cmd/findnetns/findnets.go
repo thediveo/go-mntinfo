@@ -36,7 +36,7 @@ var (
 
 func main() {
 	_ = kingpin.MustParse(app.Parse(os.Args[1:]))
-	mounts := mntinfo.FsTypeMounts(-1, "nsfs")
+	mounts := mntinfo.MountsOfType(-1, "nsfs")
 	// Sort all mount namespaces by their namespace ID.
 	sort.Slice(mounts, func(a, b int) bool {
 		return mounts[a].Root < mounts[b].Root

@@ -51,15 +51,21 @@ type Mountinfo struct {
 	SuperOptions string `json:"superoptions"`
 }
 
-// Mounts returns all mounts for either the current process (when pid specified
+// Mounts returns all mounts for the current process.
+func Mounts() []Mountinfo {
+	return parseProcMountinfo(-1)
+}
+
+// MountsOfPid returns all mounts for either the current process (when pid specified
 // as -1), or for another process identified by its PID.
-func Mounts(pid int) []Mountinfo {
+func MountsOfPid(pid int) []Mountinfo {
 	return parseProcMountinfo(pid)
 }
 
-// FsTypeMounts returns only those mounts for the current or another process
-// (-1 or specific PID) matching the given fstype. Some fstypes are
-func FsTypeMounts(pid int, fstype string) []Mountinfo {
+// MountsOfType returns only those mounts for the current or another process
+// (-1 or specific PID) matching the given fstype. Some fstypes are "ext4",
+// "proc", "sysfs", "vfat", and many more.
+func MountsOfType(pid int, fstype string) []Mountinfo {
 	mounts := parseProcMountinfo(pid)
 	filtered := []Mountinfo{}
 	for idx := range mounts {

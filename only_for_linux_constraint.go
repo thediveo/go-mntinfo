@@ -5,4 +5,4 @@
 
 package mntinfo
 
-var _ = package_mntinfo_requires_Linux
+var _ = requiresLinux
