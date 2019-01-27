@@ -27,7 +27,7 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
-// nolint: unused,deadcode,varcheck
+// nolint unused,deadcode,varcheck
 var (
 	app     = kingpin.New(filepath.Base(os.Args[0]), "Finds all bind-mounted Linux network namespaces.")
 	version = app.Version("0.9.0")
