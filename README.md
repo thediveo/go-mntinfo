@@ -1,6 +1,8 @@
 # mntinfo
 
 [![GoDoc](https://godoc.org/github.com/TheDiveO/go-mntinfo?status.svg)](http://godoc.org/github.com/TheDiveO/go-mntinfo)
+[![GitHub](https://img.shields.io/github/license/thediveo/go-asciitree)](https://img.shields.io/github/license/thediveo/go-asciitree)
+[![Go Report Card](https://goreportcard.com/badge/github.com/TheDiveO/go-mntinfo)](https://goreportcard.com/report/github.com/TheDiveO/go-mntinfo)
 
 `mntinfo` is a _minimalistic_ Linux-only Go package for discovering the
 currently mounted filesystems seen by processes. This package also supports
