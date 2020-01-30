@@ -15,6 +15,7 @@
 package mntinfo
 
 import (
+	"encoding/json"
 	"os"
 
 	. "github.com/onsi/ginkgo"
@@ -111,6 +112,15 @@ var _ = Describe("mntinfo", func() {
 			Expect(len(MountsOfPid(int(^uint(0) >> 1)))).To(BeZero())
 		})
 
+	})
+
+	It("translates to/from JSON", func() {
+		minfo := Mounts()[0]
+		b, err := json.Marshal(minfo)
+		Expect(err).ToNot(HaveOccurred())
+		var minfo2 Mountinfo
+		Expect(json.Unmarshal(b, &minfo2)).ToNot(HaveOccurred())
+		Expect(minfo2).To(Equal(minfo))
 	})
 
 })
