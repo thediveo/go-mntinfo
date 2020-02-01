@@ -1,7 +1,8 @@
 # mntinfo
 
 [![GoDoc](https://godoc.org/github.com/TheDiveO/go-mntinfo?status.svg)](http://godoc.org/github.com/TheDiveO/go-mntinfo)
-[![GitHub](https://img.shields.io/github/license/thediveo/go-asciitree)](https://img.shields.io/github/license/thediveo/go-asciitree)
+[![GitHub](https://img.shields.io/github/license/thediveo/go-mntinfo)](https://img.shields.io/github/license/thediveo/go-mntinfo)
+![build and test](https://github.com/TheDiveO/ggo-mntinfo/workflows/build%20and%20test/badge.svg?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/TheDiveO/go-mntinfo)](https://goreportcard.com/report/github.com/TheDiveO/go-mntinfo)
 
 `mntinfo` is a _minimalistic_ Linux-only Go package for discovering the
