@@ -18,14 +18,15 @@ import (
 	"encoding/json"
 	"os"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
+	. "github.com/thediveo/fdooze"
 )
 
 var _ = Describe("mntinfo", func() {
 
-	Describe("parses mountinfo lines", func() {
+	When("parsing mountinfo lines", func() {
 
 		It("rejecting malformed lines", func() {
 			malformed := []string{
@@ -84,7 +85,14 @@ var _ = Describe("mntinfo", func() {
 
 	})
 
-	Describe("parses /proc/self/mountinfo", func() {
+	When("parsing /proc/self/mountinfo", func() {
+
+		BeforeEach(func() {
+			goodfds := Filedescriptors()
+			DeferCleanup(func() {
+				Expect(Filedescriptors()).NotTo(HaveLeakedFds(goodfds))
+			})
+		})
 
 		It("reads self mountinfo", func() {
 			// There needs to be at least one mount for "/" on "/" ... or

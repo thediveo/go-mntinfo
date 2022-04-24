@@ -17,11 +17,11 @@ package mntinfo
 import (
 	"testing"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
-func TestFindmnt(t *testing.T) {
+func TestFindmntPackage(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "findmnt suite")
+	RunSpecs(t, "findmnt package")
 }

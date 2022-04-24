@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:build linux
 // +build linux
 
 package main
@@ -19,23 +20,14 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 
-	mntinfo "github.com/thediveo/go-mntinfo"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	"github.com/spf13/cobra"
+	"github.com/thediveo/go-mntinfo"
 )
 
-// nolint unused,deadcode,varcheck
-var (
-	app     = kingpin.New(filepath.Base(os.Args[0]), "Finds all bind-mounted Linux network namespaces.")
-	version = app.Version("0.9.0")
-	_       = app.HelpFlag.Short('h') // now that's hidden deep inside the code...
-)
-
-func main() {
-	_ = kingpin.MustParse(app.Parse(os.Args[1:]))
+func dumpNetNs(cmd *cobra.Command, _ []string) error {
 	mounts := mntinfo.MountsOfType(-1, "nsfs")
 	// Sort all mount namespaces by their namespace ID.
 	sort.Slice(mounts, func(a, b int) bool {
@@ -45,5 +37,30 @@ func main() {
 		if strings.HasPrefix(mount.Root, "net:[") {
 			fmt.Printf("%s at %s\n", mount.Root, mount.MountPoint)
 		}
+	}
+	return nil
+}
+
+// newRootCmd creates the root command with usage and version information, as
+// well as the available CLI flags (including descriptions).
+func newRootCmd() (rootCmd *cobra.Command) {
+	rootCmd = &cobra.Command{
+		Use:     "findnetns",
+		Short:   "findnetns finds all bind-mounted Linux network namespaces",
+		Version: "0.9.1",
+		Args:    cobra.NoArgs,
+		RunE:    dumpNetNs,
+	}
+	// no additional CLI flags.
+	return
+}
+
+func main() {
+	// This is cobra boilerplate documentation, except for the missing call to
+	// fmt.Println(err) which in the original boilerplate is just plain wrong:
+	// it renders the error message twice, see also:
+	// https://github.com/spf13/cobra/issues/304
+	if err := newRootCmd().Execute(); err != nil {
+		os.Exit(1)
 	}
 }
