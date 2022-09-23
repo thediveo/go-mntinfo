@@ -17,6 +17,7 @@ package mntinfo
 import (
 	"bufio"
 	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -51,22 +52,28 @@ type Mountinfo struct {
 	SuperOptions string `json:"superoptions"`
 }
 
-// Mounts returns all mounts for the current process.
+// In production, use the real™ process filesystem.
+var procfs = os.DirFS("/proc")
+
+// Mounts returns all mounts for the current process. If for some reason the
+// mount information cannot be read then an empty slice is returned instead.
 func Mounts() []Mountinfo {
-	return parseProcMountinfo(-1)
+	return parseProcMountinfo(procfs, -1)
 }
 
-// MountsOfPid returns all mounts for either the current process (when pid specified
-// as -1), or for another process identified by its PID.
+// MountsOfPid returns all mounts for either the current process (when pid
+// specified as -1), or for another process identified by its PID. If the pid is
+// invalid then an empty slice is returned instead.
 func MountsOfPid(pid int) []Mountinfo {
-	return parseProcMountinfo(pid)
+	return parseProcMountinfo(procfs, pid)
 }
 
-// MountsOfType returns only those mounts for the current or another process
-// (-1 or specific PID) matching the given fstype. Some fstypes are "ext4",
-// "proc", "sysfs", "vfat", and many more.
+// MountsOfType returns only those mounts for the current or another process (-1
+// or specific PID) matching the given fstype. Some fstypes are "ext4", "proc",
+// "sysfs", "vfat", and many more. If the pid is invalid then an empty slice is
+// returned instead.
 func MountsOfType(pid int, fstype string) []Mountinfo {
-	mounts := parseProcMountinfo(pid)
+	mounts := parseProcMountinfo(procfs, pid)
 	filtered := []Mountinfo{}
 	for idx := range mounts {
 		if mounts[idx].FsType == fstype {
@@ -79,7 +86,7 @@ func MountsOfType(pid int, fstype string) []Mountinfo {
 // Fetches the mount information for a specific process (by PID) from the
 // Linux kernel's procfs and parses it into a slice of Mountinfo elements, one
 // for each mount.
-func parseProcMountinfo(pid int) (mi []Mountinfo) {
+func parseProcMountinfo(procfs fs.FS, pid int) (mi []Mountinfo) {
 	mi = []Mountinfo{}
 	var pidstr string
 
@@ -88,7 +95,7 @@ func parseProcMountinfo(pid int) (mi []Mountinfo) {
 	} else {
 		pidstr = strconv.Itoa(pid)
 	}
-	mif, err := os.Open(filepath.Join("/proc", pidstr, "mountinfo"))
+	mif, err := procfs.Open(filepath.Join(pidstr, "mountinfo"))
 	if err != nil {
 		return
 	}
@@ -109,14 +116,15 @@ func parseProcMountinfo(pid int) (mi []Mountinfo) {
 // Parses a single line from /proc/[PID]/mountinfo, returning the information
 // in a Mountinfo struct.
 func parseProcMountinfoLine(mntline string) (info Mountinfo, err error) {
+	var inf Mountinfo
 	// (1) mount ID
-	info.MountID, mntline, err = nextInt(mntline)
+	inf.MountID, mntline, err = nextInt(mntline)
 	if err != nil {
 		return
 	}
 
 	// (2) parent ID
-	info.ParentID, mntline, err = nextInt(mntline)
+	inf.ParentID, mntline, err = nextInt(mntline)
 	if err != nil {
 		return
 	}
@@ -135,21 +143,21 @@ func parseProcMountinfoLine(mntline string) (info Mountinfo, err error) {
 	if err != nil {
 		return
 	}
-	info.Major = major
+	inf.Major = major
 	minor, err := strconv.Atoi(majmin[1])
 	if err != nil {
 		return
 	}
-	info.Minor = minor
+	inf.Minor = minor
 
 	// (4) root
-	info.Root, mntline, err = nextString(mntline)
+	inf.Root, mntline, err = nextString(mntline)
 	if err != nil {
 		return
 	}
 
 	// (5) mount point
-	info.MountPoint, mntline, err = nextString(mntline)
+	inf.MountPoint, mntline, err = nextString(mntline)
 	if err != nil {
 		return
 	}
@@ -159,15 +167,44 @@ func parseProcMountinfoLine(mntline string) (info Mountinfo, err error) {
 	if err != nil {
 		return
 	}
-	info.MountOptions = strings.Split(opts, ",")
+	inf.MountOptions = strings.Split(opts, ",")
 
 	// (7-8) optional fields, until single hyphen separator
-	tags := map[string]string{}
+	inf.Tags, mntline, err = nextTags(mntline)
+	if err != nil {
+		return
+	}
+
+	// (9) filesystem type
+	inf.FsType, mntline, err = nextString(mntline)
+	if err != nil {
+		return
+	}
+
+	// (10) mount source
+	inf.Source, mntline, err = nextString(mntline)
+	if err != nil {
+		return
+	}
+
+	// (11) super options
+	inf.SuperOptions, _, err = nextString(mntline)
+	if err != nil {
+		return
+	}
+
+	return inf, nil // only now return the non-zero mount information
+}
+
+// Snips off the next elements from a string of space-delimited elements until a
+// dash "-" element is reached, and returns the elements as a map of tags.
+func nextTags(line string) (tags map[string]string, remline string, err error) {
+	tags = map[string]string{}
 	for {
 		var tag string
-		tag, mntline, err = nextString(mntline)
+		tag, line, err = nextString(line)
 		if err != nil {
-			return
+			return nil, "", err
 		}
 		if tag == "-" {
 			break
@@ -179,24 +216,7 @@ func parseProcMountinfoLine(mntline string) (info Mountinfo, err error) {
 			tags[namevalue[0]] = namevalue[1]
 		}
 	}
-	info.Tags = tags
-
-	// (9) filesystem type
-	info.FsType, mntline, err = nextString(mntline)
-	if err != nil {
-		return
-	}
-
-	// (10) mount source
-	info.Source, mntline, err = nextString(mntline)
-	if err != nil {
-		return
-	}
-
-	// (11) super options
-	info.SuperOptions, _, err = nextString(mntline)
-
-	return
+	return tags, line, nil
 }
 
 // Snipps off the first element from a string of space-delimited elements and
