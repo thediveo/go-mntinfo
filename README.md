@@ -15,9 +15,19 @@ supports discovering only those mounts matching a specific filesystem type.
 > `proc` filesystem – see also
 > [proc(5)](https://man7.org/linux/man-pages/man5/proc.5.html).
 
-## View Module Documentation Locally
+## Installation
 
-`make pkgsite`, then navigate to http://localhost:6060/github.com/thediveo/go-plugger.
+```bash
+go get github.com/thediveo/go-mntinfo
+```
+
+## Hacking It
+
+- to view the package documentation locally:
+  - either: `make pkgsite`, then navigate to http://localhost:6060/github.com/thediveo/go-plugger;
+  - or, in VSCode (using the VSCode-integrated simple browser): “Tasks: Run
+    Task” ⇢ “View Go module documentation”.
+- `make` shows the available make targets.
 
 ## Copyright and License
 
