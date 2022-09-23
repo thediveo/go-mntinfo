@@ -17,6 +17,7 @@ package mntinfo
 import (
 	"encoding/json"
 	"os"
+	"testing/fstest"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -28,31 +29,38 @@ var _ = Describe("mntinfo", func() {
 
 	When("parsing mountinfo lines", func() {
 
-		It("rejecting malformed lines", func() {
-			malformed := []string{
-				"",
-				"abc", "42",
-				"42 abc", "42 42",
-				"42 42 foo", "42 42 foo:bar", "42 42 42:42", "42 42 abc:42", "42 42 42:abc",
-				"42 42 42:42 /",
-				"42 42 42:42 / /proc",
-				"42 42 42:42 / /proc foo,bar,baz",
-				"42 42 42:42 / /proc foo,bar,baz froz:42",
-				"42 42 42:42 / /proc foo,bar,baz froz:42 baz:42",
-				"42 42 42:42 / /proc foo,bar,baz froz:42 baz:42 -",
-				"42 42 42:42 / /proc foo,bar,baz froz:42 baz:42 - abcfs",
-				"42 42 42:42 / /proc foo,bar,baz froz:42 baz:42 - abcfs abcfs",
-				"42 42 42:42 / /proc foo,bar,baz froz:42 baz:42 - abcfs abcfs ",
-			}
+		DescribeTable("rejects malformed lines",
+			func(mntline string) {
+				Expect(parseProcMountinfoLine(mntline)).Error().To(HaveOccurred())
+			},
+			EntryDescription("%s"),
+			Entry(nil, ""),
+			Entry(nil, "abc"),
+			Entry(nil, "42"),
+			Entry(nil, "42 abc"),
+			Entry(nil, "42 42"),
+			Entry(nil, "42 42 foo"),
+			Entry(nil, "42 42 foo:bar"),
+			Entry(nil, "42 42 42:42"),
+			Entry(nil, "42 42 abc:42"),
+			Entry(nil, "42 42 42:abc"),
+			Entry(nil, "42 42 42:42 /"),
+			Entry(nil, "42 42 42:42 / /proc"),
+			Entry(nil, "42 42 42:42 / /proc foo,bar,baz"),
+			Entry(nil, "42 42 42:42 / /proc foo,bar,baz froz:42"),
+			Entry(nil, "42 42 42:42 / /proc foo,bar,baz froz:42 baz:42"),
+			Entry(nil, "42 42 42:42 / /proc foo,bar,baz froz:42 baz:42 -"),
+			Entry(nil, "42 42 42:42 / /proc foo,bar,baz froz:42 baz:42 - abcfs"),
+			Entry(nil, "42 42 42:42 / /proc foo,bar,baz froz:42 baz:42 - abcfs abcfs"),
+			Entry(nil, "42 42 42:42 / /proc foo,bar,baz froz:42 baz:42 - abcfs abcfs "),
+		)
 
-			for _, malle := range malformed {
-				_, err := parseProcMountinfoLine(malle)
-				Expect(err).To(HaveOccurred(), "for line %q", malle)
-			}
-		})
-
-		It("returning correct mount information", func() {
-			Expect(parseProcMountinfoLine("1 2 3:4 / /proc foo,bar - abcfs defs rw")).To(Equal(Mountinfo{
+		DescribeTable("returns correct mount information",
+			func(mntline string, mntinfo Mountinfo) {
+				Expect(parseProcMountinfoLine(mntline)).To(Equal(mntinfo))
+			},
+			EntryDescription("%s"),
+			Entry(nil, "1 2 3:4 / /proc foo,bar - abcfs defs rw", Mountinfo{
 				MountID:      1,
 				ParentID:     2,
 				Major:        3,
@@ -64,8 +72,8 @@ var _ = Describe("mntinfo", func() {
 				FsType:       "abcfs",
 				Source:       "defs",
 				SuperOptions: "rw",
-			}))
-			Expect(parseProcMountinfoLine("1 2 3:4 / /proc foo,bar frotz barz:42 - abcfs defs rw")).To(Equal(Mountinfo{
+			}),
+			Entry(nil, "1 2 3:4 / /proc foo,bar frotz barz:42 - abcfs defs rw", Mountinfo{
 				MountID:      1,
 				ParentID:     2,
 				Major:        3,
@@ -80,7 +88,39 @@ var _ = Describe("mntinfo", func() {
 				FsType:       "abcfs",
 				Source:       "defs",
 				SuperOptions: "rw",
-			}))
+			}),
+		)
+
+	})
+
+	When("parsing procfs mount information", func() {
+
+		It("returns an error when the process is missing", func() {
+			emptyfs := fstest.MapFS{}
+			Expect(parseProcMountinfo(emptyfs, 42)).To(BeEmpty())
+		})
+
+		It("returns mount info for our process, skipping garbage", func() {
+			selffs := fstest.MapFS{
+				"self/mountinfo": &fstest.MapFile{
+					Data: []byte(`24 31 0:22 / /sys rw,nosuid,nodev,noexec,relatime shared:7 - sysfs sysfs rw
+Linus had a little penguin
+25 31 0:23 / /proc rw,nosuid,nodev,noexec,relatime shared:12 - proc proc rw
+`),
+				},
+			}
+			Expect(parseProcMountinfo(selffs, -1)).To(HaveLen(2))
+		})
+
+		It("returns mount info for a particular process", func() {
+			selffs := fstest.MapFS{
+				"42/mountinfo": &fstest.MapFile{
+					Data: []byte(`24 31 0:22 / /sys rw,nosuid,nodev,noexec,relatime shared:7 - sysfs sysfs rw
+25 31 0:23 / /proc rw,nosuid,nodev,noexec,relatime shared:12 - proc proc rw
+`),
+				},
+			}
+			Expect(parseProcMountinfo(selffs, 42)).To(HaveLen(2))
 		})
 
 	})
