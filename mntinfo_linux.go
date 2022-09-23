@@ -162,24 +162,10 @@ func parseProcMountinfoLine(mntline string) (info Mountinfo, err error) {
 	info.MountOptions = strings.Split(opts, ",")
 
 	// (7-8) optional fields, until single hyphen separator
-	tags := map[string]string{}
-	for {
-		var tag string
-		tag, mntline, err = nextString(mntline)
-		if err != nil {
-			return
-		}
-		if tag == "-" {
-			break
-		}
-		namevalue := strings.SplitN(tag, ":", 2)
-		if len(namevalue) < 2 {
-			tags[namevalue[0]] = ""
-		} else {
-			tags[namevalue[0]] = namevalue[1]
-		}
+	info.Tags, mntline, err = nextTags(mntline)
+	if err != nil {
+		return
 	}
-	info.Tags = tags
 
 	// (9) filesystem type
 	info.FsType, mntline, err = nextString(mntline)
@@ -197,6 +183,29 @@ func parseProcMountinfoLine(mntline string) (info Mountinfo, err error) {
 	info.SuperOptions, _, err = nextString(mntline)
 
 	return
+}
+
+// Snips off the next elements from a string of space-delimited elements until a
+// dash "-" element is reached, and returns the elements as a map of tags.
+func nextTags(line string) (tags map[string]string, remline string, err error) {
+	tags = map[string]string{}
+	for {
+		var tag string
+		tag, line, err = nextString(line)
+		if err != nil {
+			return nil, "", err
+		}
+		if tag == "-" {
+			break
+		}
+		namevalue := strings.SplitN(tag, ":", 2)
+		if len(namevalue) < 2 {
+			tags[namevalue[0]] = ""
+		} else {
+			tags[namevalue[0]] = namevalue[1]
+		}
+	}
+	return tags, line, nil
 }
 
 // Snipps off the first element from a string of space-delimited elements and
