@@ -1,4 +1,4 @@
-.PHONY: help clean godoc report test
+.PHONY: help chores clean coverage pkgsite report test vuln
 
 help: ## list available targets
 	@# Shamelessly stolen from Gomega's Makefile
@@ -14,11 +14,14 @@ pkgsite: ## serves Go documentation on port 6060
 	@echo "navigate to: http://localhost:6060/github.com/thediveo/go-mntinfo"
 	@scripts/pkgsite.sh
 
-report: ## run goreportcard on this module
+report: ## runs goreportcard on this module
 	@scripts/goreportcard.sh
 
-test: ## run unit tests
-	go test -v -race -count 1 ./...
+test: ## runs unit tests
+	go test -v -p=1 -count=1 -race ./...
 
-vuln: ## run go vulnerabilities check
-	@govulncheck ./...
+vuln: ## runs govulncheck
+	@scripts/vuln.sh
+
+chores: ## updates Go binaries and NPM helper packages if necessary
+	@scripts/chores.sh

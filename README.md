@@ -31,7 +31,7 @@ go get github.com/thediveo/go-mntinfo
 
 ## Copyright and License
 
-`mntinfo` is Copyright 2019, 2022 Harald Albrecht, and licensed under the
+`mntinfo` is Copyright 2019-23 Harald Albrecht, and licensed under the
 [Apache License, Version 2.0](LICENSE).
 
 ## Requirements
