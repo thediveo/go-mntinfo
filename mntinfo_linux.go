@@ -99,7 +99,7 @@ func parseProcMountinfo(procfs fs.FS, pid int) (mi []Mountinfo) {
 	if err != nil {
 		return
 	}
-	defer mif.Close()
+	defer func() { _ = mif.Close() }()
 
 	// Read in all lines from /proc/.../mountinfo, silently skipping any
 	// garbage line we might encounter on our way.
