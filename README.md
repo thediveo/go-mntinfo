@@ -15,12 +15,6 @@ supports discovering only those mounts matching a specific filesystem type.
 > `proc` filesystem – see also
 > [proc(5)](https://man7.org/linux/man-pages/man5/proc.5.html).
 
-## Usage
-
-```bash
-go get github.com/thediveo/go-mntinfo
-```
-
 ## DevContainer
 
 > [!CAUTION]

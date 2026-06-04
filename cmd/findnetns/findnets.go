@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 package main
 
@@ -24,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
 	"github.com/thediveo/go-mntinfo"
 )
 

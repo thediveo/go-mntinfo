@@ -110,6 +110,7 @@ func parseProcMountinfo(procfs fs.FS, pid int) (mi []Mountinfo) {
 			mi = append(mi, info)
 		}
 	}
+	_ = mifscan.Err() // shtumm
 	return
 }
 
