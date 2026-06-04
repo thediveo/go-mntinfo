@@ -138,7 +138,7 @@ Linus had a little penguin
 			// There needs to be at least one mount for "/" on "/" ... or
 			// otherwise something is really rotten here.
 			minfo := Mounts()
-			Expect(len(minfo)).NotTo(BeZero())
+			Expect(minfo).NotTo(BeEmpty())
 			Expect(minfo).To(ContainElement(
 				MatchFields(IgnoreExtras, Fields{
 					"Root":       Equal("/"),
@@ -148,7 +148,7 @@ Linus had a little penguin
 
 		It("filters mountinfo by fs type", func() {
 			minfo := MountsOfType(-1, "proc")
-			Expect(len(minfo)).NotTo(BeZero())
+			Expect(minfo).NotTo(BeEmpty())
 		})
 
 		It("reads mountinfo from PID", func() {
@@ -157,7 +157,7 @@ Linus had a little penguin
 		})
 
 		It("doesn't read from non-existing PID", func() {
-			Expect(len(MountsOfPid(int(^uint(0) >> 1)))).To(BeZero())
+			Expect(MountsOfPid(int(^uint(0) >> 1))).To(BeEmpty())
 		})
 
 	})
